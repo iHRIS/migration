@@ -1647,9 +1647,13 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
             $where = "WHERE GREATEST(person.last_modified, IFNULL(demographic.last_modified,'0000-00-00 00:00:00'), IFNULL(personal.last_modified,'0000-00-00 00:00:00'), IFNULL(work.last_modified,'0000-00-00 00:00:00')) >= ?";
             $params = array( $this->since );
         } */
-
-        $qry = $mainRequestPractitioner;
+        if($listConfigs["limitLocationForm"]['status'] ==true)
+        {
+            $mainRequestPractitioner.=" where ".$listConfigs["limitLocationForm"]['form'].".".$listConfigs["limitLocationForm"]['fieldName']."='".$listConfigs["limitLocationForm"]['value']."'";
+        }
         
+        $qry = $mainRequestPractitioner;
+        //echo "$mainRequestPractitioner";
         //print_r($LinkedFormRequest);
         //return array('result'=>"ok");
         
@@ -1696,7 +1700,7 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                     if($keyJoinForm){
                         $subQuery=$joinFormRequest['mainFieldQuery']. $joinFormRequest['sourceFieldQuery'];
                         /* print_r($subQuery);
-                        print_r("-------------------------------------"); */ 
+                        print_r("-------------------------------------"); */
                         $subStmt = $db->prepare( $subQuery );
                         $subStmt->execute($paramSub);
                         $id_count=0;
@@ -1750,7 +1754,8 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
         try{
             $dir = getcwd();
             chdir("../modules/mCSDUpdateSupplier");
-            $strJsonFileContents = file_get_contents("./mapping/practitioner.json");
+            //$strJsonFileContents = file_get_contents("./mapping/practitioner.json");
+            $strJsonFileContents = file_get_contents("./mapping/practitionerbylocation.json");
             $array = json_decode($strJsonFileContents, true);
             $mainFieldQuery="";
             $sourceFieldQuery="";
@@ -1790,13 +1795,28 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
             //return null;
         }
     }
+    protected function getConfigData(&$listConfigs)
+    {
+        try
+        {
+            $dir = getcwd();
+            chdir("../modules/mCSDUpdateSupplier");
+            $strJsonFileContents = file_get_contents("./mapping/location.json");
+            $array = json_decode($strJsonFileContents, true);
+            $this->getConfig($array,$listConfigs);
+        }
+        catch(Exception $e)
+        {
+            echo "Error :".$e->getMessage();
+        }
+    }
     protected function buidMainRequest_PractitionerRole(&$mainRequestPractitionerRole,&$LinkedFormRequest,&$listMainForms,
     &$listMappingFields,&$listExtensionMappingField,&$listConfigs)
     {
         try{
             $dir = getcwd();
             chdir("../modules/mCSDUpdateSupplier");
-            $strJsonFileContents = file_get_contents("./mapping/practitionerrole.json");
+            $strJsonFileContents = file_get_contents("./mapping/practitionerrolebylocation.json");
             $array = json_decode($strJsonFileContents, true);
             $mainFieldQuery=array();
             $sourceFieldQuery=array();
@@ -2162,6 +2182,7 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
             {
                 $joinedForm=$mappingElement['iHRISForm'];
                 $joinFormAlias=$mappingElement['iHRISFormAlias'];
+                $joiningConstraint=$mappingElement['joiningConstraint'];
                 array_push($listMainForms,$joinedForm);
                 $parentForm=$data['iHRISForm'];
                 $joinedFieldSource=$mappingElement['iHRISFormJoinFieldSource'];
@@ -2198,7 +2219,14 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                         }
                     }
                 }
-                $sourceFieldQuery.=" LEFT JOIN hippo_".$joinedForm." AS ".$joinFormAlias." ON $joinFormAlias.$joinedFieldDestination = $parentForm.$joinedFieldSource";
+                if($joiningConstraint)
+                {
+                    $sourceFieldQuery.=" JOIN hippo_".$joinedForm." AS ".$joinFormAlias." ON $joinFormAlias.$joinedFieldDestination = $parentForm.$joinedFieldSource";
+                }
+                else{
+                    $sourceFieldQuery.=" LEFT JOIN hippo_".$joinedForm." AS ".$joinFormAlias." ON $joinFormAlias.$joinedFieldDestination = $parentForm.$joinedFieldSource";
+                }
+                
                 
                 if(array_key_exists('iHRISJoinedForms',$mappingElement)){
                     $this->extractJoinFormFields($mappingElement,$mainFieldQuery,$sourceFieldQuery,$listMainForms);
@@ -2219,6 +2247,7 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
             {
                 $joinedForm=$mappingElement['iHRISForm'];
                 $joinFormAlias=$mappingElement['iHRISFormAlias'];
+                $joiningConstraint=$mappingElement['joiningConstraint'];
                 array_push($listMainForms,$joinedForm);
                 $parentForm=$data['iHRISForm'];
                 $joinedFieldSource=$mappingElement['iHRISFormJoinFieldSource'];
@@ -2255,7 +2284,14 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                         }
                     }
                 }
-                $sourceFieldQuery[$rootForm].=" LEFT JOIN hippo_".$joinedForm." AS ".$joinFormAlias." ON $joinFormAlias.$joinedFieldDestination = $parentForm.$joinedFieldSource";
+                if($joiningConstraint)
+                {
+                    $sourceFieldQuery[$rootForm].=" JOIN hippo_".$joinedForm." AS ".$joinFormAlias." ON $joinFormAlias.$joinedFieldDestination = $parentForm.$joinedFieldSource";
+                }
+                else{
+                    $sourceFieldQuery[$rootForm].=" LEFT JOIN hippo_".$joinedForm." AS ".$joinFormAlias." ON $joinFormAlias.$joinedFieldDestination = $parentForm.$joinedFieldSource";
+                }
+                //$sourceFieldQuery[$rootForm].=" LEFT JOIN hippo_".$joinedForm." AS ".$joinFormAlias." ON $joinFormAlias.$joinedFieldDestination = $parentForm.$joinedFieldSource";
                 
                 if(array_key_exists('iHRISJoinedForms',$mappingElement)){
                     $this->extractJoinFormFieldsCollection($mappingElement,$rootForm,$mainFieldQuery,$sourceFieldQuery,$listMainForms);
@@ -3078,6 +3114,10 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
         $telecom=array();
         $address=array();
         $communication=array();
+        if($configs['profileName']!=''){
+            $top['meta']=array('profile'=>[$configs['profileName']]);
+        }
+        
 
         //print_r($data);
         /*echo "\n---------------------extension metadata----------------------\n"; */ 
@@ -3086,6 +3126,7 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
 
         $oIdentifier=array();
         $oIdentifier['system']=$configs['identifierSystemUrl'];
+        //$oIdentifier['type']=array('coding'=>array(array('system'=>'http://terminology.hl7.org/CodeSystem/v2-0203','code'=>'EN','display'=>'Matricule')));
         $oHumanName['use']=$configs['nameUse'];
         $oPhoto = array();
         $oQualification=array();
@@ -3100,8 +3141,6 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                    $this->extractFieldExtension($listExtensionMappingFields,$mappingFields,$configs,$data,$fieldExtension,
                     $fieldHasExtension); 
                 }
-                
-
                 if($key==$mappingFields['iHRISFieldAlias'] && $mappingFields['fhirBaseElement']=="Practitioner")
                 {
                     if(array_key_exists('extension',$mappingFields)){
@@ -3150,6 +3189,22 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                     if($mappingFields['fhirField']=="system")
                     {
                         $oIdentifier['system']=$configs['identifierSystemUrl'].$value;
+                    }
+                    elseif($mappingFields['fhirField']=="type_display")
+                    {
+                        if(!array_key_exists('type',$oIdentifier))
+                        {
+                            $oIdentifier['type']=array('coding'=>array());
+                        }
+                        $oIdentifier['type']['coding'][0]=array('display'=>$value);
+                    }
+                    elseif($mappingFields['fhirField']=="type_code")
+                    {
+                        if(!array_key_exists('type',$oIdentifier))
+                        {
+                            $oIdentifier['type']=array('coding'=>array());
+                        }
+                        $oIdentifier['type']['coding'][0]=array('code'=>$value);
                     }
                     elseif($mappingFields['fhirField']=="value"){
                         $oIdentifier['value']=$value;
@@ -3482,6 +3537,7 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
             foreach($identifierLinked as $key=>$identifier)
             {
                 //array_push($top['identifier'],$identifier);
+                $identifier['type']=array('coding'=>array(array('system'=>'http://terminology.hl7.org/CodeSystem/v2-0203','code'=>'EN','display'=>'Matricule')));
                 $top['identifier'][]=$identifier;
             }
          } 
@@ -4100,6 +4156,22 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                             if($mappingFields['fhirField']=="system")
                             {
                                 $builtInIdentifier[$indexId]['system']=$configs['identifierSystemUrl'].$value;
+                            }
+                            elseif($mappingFields['fhirField']=="type_display")
+                            {
+                                if(!array_key_exists('type',$builtInIdentifier[$indexId]))
+                                {
+                                    $builtInIdentifier[$indexId]['type']=array('coding'=>array());
+                                }
+                                $builtInIdentifier[$indexId]['type']['coding'][0]=array('display'=>$value);
+                            }
+                            elseif($mappingFields['fhirField']=="type_code")
+                            {
+                                if(!array_key_exists('type',$builtInIdentifier[$indexId]))
+                                {
+                                    $builtInIdentifier[$indexId]['type']=array('coding'=>array());
+                                }
+                                $builtInIdentifier[$indexId]['type']['coding'][0]=array('code'=>$value);
                             }
                             elseif($mappingFields['fhirField']=="value"){
                                 $builtInIdentifier[$indexId]['value']=$value;
@@ -4976,6 +5048,172 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
             return false;
         }
     }
+    protected function getUpdatesMapping_Location( &$top ) {
+        if ( $this->useJSON ) {
+            $top['type'] = 'history';
+            $top['total'] = 0;
+        } else {
+            $type = $this->doc->createElement("type");
+            $type->setAttribute("value", "history");
+            $top->appendChild($type);
+    
+            $total = $this->doc->createElement("total");
+            $top->appendChild($total);
+        }
+
+
+        $required_forms = array( "facility", "facility_type", "county", "district", "region", "country",'health_area' );
+        foreach( $required_forms as $form ) {
+            $cachedForm = new I2CE_CachedForm($form);
+            if ( !$cachedForm->generateCachedTable() ) {
+                http_response_code(500);
+                return false;
+            }
+        }
+        $listConfigs=array();
+        $this->getConfigData($listConfigs);
+        $limitFormRequest='';
+
+        if($listConfigs["limitLocationForm"]['status'] ==true)
+        {
+            $limitFormRequest.=$listConfigs["limitLocationForm"]['form'].".".$listConfigs["limitLocationForm"]['fieldName']."='".$listConfigs["limitLocationForm"]['value']."'";
+        }
+
+        /* $queries = array( 
+                'facility' => "SELECT facility.csd_uuid as uuid, DATE_FORMAT(facility.last_modified, '%Y-%m-%d %T') AS lastupdated, facility.id, facility.name, facility.facility_type, ft.name AS facility_type_name, IFNULL(county.csd_uuid, IFNULL(district.csd_uuid, IFNULL(region.csd_uuid, country.csd_uuid))) AS partof FROM hippo_facility AS facility LEFT JOIN hippo_county AS county ON county.id = facility.location LEFT JOIN hippo_district AS district ON district.id = facility.location LEFT JOIN hippo_region AS region ON region.id = facility.location LEFT JOIN hippo_country AS country ON country.id = facility.location LEFT JOIN hippo_facility_type ft ON ft.id = facility.facility_type",
+                'county' => "SELECT county.csd_uuid as uuid, DATE_FORMAT(county.last_modified, '%Y-%m-%d %T') AS lastupdated, county.id, county.name, 'na' AS facility_type, 'na' AS facility_type_name, district.csd_uuid AS partof FROM hippo_county AS county LEFT JOIN hippo_district AS district ON district.id = county.district",
+                'district' => "SELECT district.csd_uuid as uuid, DATE_FORMAT(district.last_modified, '%Y-%m-%d %T') AS lastupdated, district.id, district.name, 'na' AS facility_type, 'na' AS facility_type_name, region.csd_uuid AS partof FROM hippo_district AS district LEFT JOIN hippo_region AS region ON region.id = district.region",
+                'region' => "SELECT region.csd_uuid as uuid, DATE_FORMAT(region.last_modified, '%Y-%m-%d %T') AS lastupdated, region.id, region.name, 'na' AS facility_type, 'na' AS facility_type_name, country.csd_uuid AS partof FROM hippo_region AS region LEFT JOIN hippo_country AS country ON country.id = region.country",
+                'country' => "SELECT country.csd_uuid as uuid, DATE_FORMAT(country.last_modified, '%Y-%m-%d %T') AS lastupdated, country.id, country.name, 'na' AS facility_type, 'na' AS facility_type_name, null AS partof FROM hippo_country AS country",
+                ); */
+        /** Return facility by geographic area. specification for DRC facilities list structure */
+        $queries = array( 
+            'facility_healtharea' => "SELECT facility.csd_uuid as uuid, DATE_FORMAT(facility.last_modified, '%Y-%m-%d %T') AS lastupdated, facility.id, facility.name,facility.facility_type, ft.name AS facility_type_name, replace(health_area.id,'|','-') AS partof FROM hippo_facility AS facility JOIN hippo_health_area as health_area on health_area.id=facility.location JOIN hippo_county AS county ON county.id = health_area.county JOIN hippo_district AS district ON district.id = county.district JOIN hippo_region AS region ON region.id = district.region JOIN hippo_country AS country ON country.id = region.country LEFT JOIN hippo_facility_type ft ON ft.id = facility.facility_type ",
+            'facility_county'=>"SELECT facility.csd_uuid as uuid, DATE_FORMAT(facility.last_modified, '%Y-%m-%d %T') AS lastupdated, facility.id, facility.name, facility.facility_type, ft.name AS facility_type_name, IF(length(county.csd_uuid)=0,replace(county.id,'|','-'),county.csd_uuid) AS partof FROM hippo_facility AS facility JOIN hippo_county AS county ON county.id = facility.location JOIN hippo_district AS district ON district.id = county.district JOIN hippo_region AS region ON region.id = district.region JOIN hippo_country AS country ON country.id = region.country LEFT JOIN hippo_facility_type ft ON ft.id = facility.facility_type ",
+            'facility_district'=>"SELECT facility.csd_uuid as uuid, DATE_FORMAT(facility.last_modified, '%Y-%m-%d %T') AS lastupdated, facility.id, facility.name, facility.facility_type, ft.name AS facility_type_name, district.csd_uuid AS partof FROM hippo_facility AS facility JOIN hippo_district AS district ON district.id = facility.location JOIN hippo_region AS region ON region.id = district.region JOIN hippo_country AS country ON country.id = region.country LEFT JOIN hippo_facility_type ft ON ft.id = facility.facility_type ",
+            'county' => "SELECT IF(length(county.csd_uuid)=0,replace(county.id,'|','-'),county.csd_uuid) as uuid, DATE_FORMAT(county.last_modified, '%Y-%m-%d %T') AS lastupdated, county.id, county.name, 'na' AS facility_type, 'na' AS facility_type_name, district.csd_uuid AS partof FROM hippo_county AS county LEFT JOIN hippo_district AS district ON district.id = county.district",
+            'district' => "SELECT district.csd_uuid as uuid, DATE_FORMAT(district.last_modified, '%Y-%m-%d %T') AS lastupdated, district.id, district.name, 'na' AS facility_type, 'na' AS facility_type_name, region.csd_uuid AS partof FROM hippo_district AS district LEFT JOIN hippo_region AS region ON region.id = district.region",
+            'region' => "SELECT region.csd_uuid as uuid, DATE_FORMAT(region.last_modified, '%Y-%m-%d %T') AS lastupdated, region.id, region.name, 'na' AS facility_type, 'na' AS facility_type_name, country.csd_uuid AS partof FROM hippo_region AS region LEFT JOIN hippo_country AS country ON country.id = region.country",
+            'country' => "SELECT country.csd_uuid as uuid, DATE_FORMAT(country.last_modified, '%Y-%m-%d %T') AS lastupdated, country.id, country.name, 'na' AS facility_type, 'na' AS facility_type_name, null AS partof FROM hippo_country AS country",
+            );
+        $qry = '';
+        $params = array();
+        foreach ($queries as $main => $query) {
+            $where = '';
+            if ( $this->since ) {
+                $mainForm=explode("_",$main);
+                if($main=='facility_healtharea')
+                {
+                    $where = "WHERE ".$mainForm[0].".last_modified >= ? AND ".$limitFormRequest;
+                }
+                else
+                {
+                    $where = "WHERE ".$mainForm[0].".last_modified >= ?";
+                }
+                
+                $params[] = $this->since;
+            }
+            else
+            {
+                if($main=='facility_healtharea')
+                {
+                    $where = "WHERE ".$limitFormRequest;
+                }
+            }
+            
+            $query .= " $where";
+            $finals[] = $query;
+        }
+        $qry = implode( ' UNION ', $finals );
+        $qry .= " ORDER BY lastupdated ASC";
+        //print_r($finals);
+        //return array('result'=>"ok"); 
+        try {
+            $db = I2CE::PDO();
+            $stmt = $db->prepare( $qry );
+            $stmt->execute( $params );
+            $count = 0;
+            if ( $this->useJSON ) {
+                $top['entry'] = array();
+            }
+            while ( $row = $stmt->fetch() ) {
+                
+                $data = array();
+                $locationUuid=null;
+                if(!$row->uuid)
+                {
+                    
+                    //$locationUuid=$row->uuid;
+                    continue;
+                }
+                /* else{
+                    $locationUuid=strtolower(preg_replace('/[^A-Za-z0-9]/', '', $row->id));;
+                } */
+                $count++;
+                $entry = $this->doc->createElement("entry");
+                if ( $this->useJSON ) {
+                    $entry = array();
+                    $entry['fullURL'] = $this->getSiteBase() . "FHIR/Location/" .$row->uuid;
+                    $entry['resource'] = array( 'resourceType' => 'Location' );
+                } else {
+                    $fullURL = $this->doc->createElement("fullURL");
+                    $fullURL->setAttribute( 'value', $this->getSiteBase() . "FHIR/Location/" . $row->uuid );
+                    $entry->appendChild( $fullURL );
+                    $resource = $this->doc->createElement("resource");
+                    $location = $this->doc->createElement( "Location" );
+                }
+                $data['uuid'] = $row->uuid;
+                $lastUpdated = new DateTime($row->lastupdated);
+                $data['lastUpdated'] = $lastUpdated->format('c');
+                $data['id_system'] = $this->getSiteBase();
+                $data['id_code'] = $row->id;
+                $data['status'] = 'active';
+                $data['mode'] = 'instance';
+                $data['name'] = $row->name;
+
+                if ( $row->facility_type == 'na' ) {
+                    $data['physicalType_system'] = 'http://hl7.org/fhir/location-physical-type';
+                    $data['physicalType'] = 'jdn';
+                    $data['type_text'] = 'Geographic Jurisdiction';
+                } else {
+                    $data['type_system'] = $this->getSiteBase();
+                    $data['type'] = $row->facility_type;
+                    $data['type_text'] = $row->facility_type_name;
+
+                    $data['physicalType_system'] = 'http://hl7.org/fhir/location-physical-type';
+                    $data['physicalType'] = 'bu';
+                }
+
+                if ( $row->partof ) {
+                    //$data['partOf'] = $this->getSiteBase() . "Location/" . $row->partof;
+                    $data['partOf'] = "Location/" . $row->partof;
+                }
+
+                if ( $this->useJSON ) {
+                    $this->create_Location( $data, $entry['resource'] );
+                    $top['entry'][] = $entry;
+                } else {
+                    $this->create_Location( $data, $location );
+
+                    $resource->appendChild($location);
+                    $entry->appendChild( $resource );
+                    $top->appendChild( $entry );
+                }
+            }
+            if ( $this->useJSON ) {
+                $top['total'] = $count;
+            } else {
+                $total->setAttribute('value', $count);
+            }
+            $stmt->closeCursor();
+            unset( $stmt );
+            return true;
+        } catch( PDOException $e ) {
+            I2CE::pdoError( $e, "Failed to get cached data for mCSD Update Supplier." );
+            http_response_code(500);
+            return false;
+        }
+    }
 
 
     /**
@@ -5569,7 +5807,6 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
         $listConfigs=array();
         $this->buidMainRequest_PractitionerRole($mainRequestPractitionerRole,$LinkedFormRequest,$listForms,$listMappingFields,
         $listExtensionMappingFields,$listConfigs);
-        //print_r($mainRequestPractitionerRole);
         foreach( $listForms as $form ) {
             $cachedForm = new I2CE_CachedForm($form);
             if ( !$cachedForm->generateCachedTable() ) {
@@ -5582,11 +5819,47 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
             $top['entry'] = array();
         }
         $count = 0;
+        /* print_r($mainRequestPractitionerRole[0]);
+        return array('result'=>"ok"); */
         foreach($mainRequestPractitionerRole as $indexReq=>$mainRequest)
         {
             $params = array();
+            
+            if($listConfigs["limitLocationForm"]['status'] ==true && 
+                $listConfigs["selectOnlyClosedPosition"]['status'] ==true)
+            {
+                $mainRequest.=" WHERE ".$listConfigs["limitLocationForm"]['form'].".".$listConfigs["limitLocationForm"]['fieldName']."='".$listConfigs["limitLocationForm"]['value']."'";
+                $operator=$listConfigs["selectOnlyClosedPosition"]['operator'];
+                switch ($operator) {
+                    case "eq":
+                        $mainRequest.=" AND ".$listConfigs["selectOnlyClosedPosition"]['form'].".".$listConfigs["selectOnlyClosedPosition"]['fieldName']."='".$listConfigs["selectOnlyClosedPosition"]['value']."'";
+                    break;
+                    case "ne":
+                        $mainRequest.=" AND ".$listConfigs["selectOnlyClosedPosition"]['form'].".".$listConfigs["selectOnlyClosedPosition"]['fieldName']."!='".$listConfigs["selectOnlyClosedPosition"]['value']."'";
+                    break;
+                }
+            }
+            elseif($listConfigs["limitLocationForm"]['status'] ==true)
+            {
+                $mainRequest.=" WHERE ".$listConfigs["limitLocationForm"]['form'].".".$listConfigs["limitLocationForm"]['fieldName']."='".$listConfigs["limitLocationForm"]['value']."'";
+            }
+            elseif($listConfigs["selectOnlyClosedPosition"]['status'] ==true)
+            {
+                $operator=$listConfigs["selectOnlyClosedPosition"]['operator'];
+                switch ($operator) {
+                    case "eq":
+                        $mainRequest.=" WHERE ".$listConfigs["selectOnlyClosedPosition"]['form'].".".$listConfigs["selectOnlyClosedPosition"]['fieldName']."='".$listConfigs["selectOnlyClosedPosition"]['value']."'";
+                    break;
+                    case "ne":
+                        $mainRequest.=" WHERE ".$listConfigs["selectOnlyClosedPosition"]['form'].".".$listConfigs["selectOnlyClosedPosition"]['fieldName']."!='".$listConfigs["selectOnlyClosedPosition"]['value']."'";
+                    break;
+                }
+            }
+
             $qry = $mainRequest;
-            //print_r($qry);
+            /*
+            print_r($qry);
+            return array('result'=>"ok");*/
             try {
                 $db = I2CE::PDO();
                 $stmt = $db->prepare( $qry );
@@ -6287,7 +6560,8 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
             }
             
         }
-        if($oIdentifier['value']!=null)
+        //if($oIdentifier['value']!=null)
+        if(array_key_exists('value',$oIdentifier))
         {
             array_push($top['identifier'],$oIdentifier);
         }

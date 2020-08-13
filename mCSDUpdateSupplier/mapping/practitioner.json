@@ -97,6 +97,7 @@
                             "iHRISFormAlias":"gender",
                             "iHRISFormJoinFieldSource":"gender",
                             "iHRISFormJoinFieldDestination":"id",
+                            "joiningConstraint":false,
                             "iHRISField":[
                                 {
                                     "fieldId":"name",
@@ -112,6 +113,7 @@
                             "iHRISFormAlias":"marital_status",
                             "iHRISFormJoinFieldSource":"marital_status",
                             "iHRISFormJoinFieldDestination":"id",
+                            "joiningConstraint":false,
                             "iHRISField":[
                                 {
                                     "fieldId":"name",
@@ -244,6 +246,7 @@
                             "iHRISFormAlias":"lien_parent",
                             "iHRISFormJoinFieldSource":"lien_parent",
                             "iHRISFormJoinFieldDestination":"id",
+                            "joiningConstraint":false,
                             "iHRISField":[
                             ],
                             "extension":[{
@@ -334,6 +337,7 @@
                     "iHRISFormAlias":"id_type",
                     "iHRISFormJoinFieldSource":"id_type",
                     "iHRISFormJoinFieldDestination":"id",
+                    "joiningConstraint":false,
                     "iHRISField":[
                         {
                             "fieldId":"name",
@@ -356,6 +360,7 @@
                     "iHRISFormAlias":"language",
                     "iHRISFormJoinFieldSource":"language",
                     "iHRISFormJoinFieldDestination":"id",
+                    "joiningConstraint":false,
                     "iHRISField":[
                         {
                             "fieldId":"name",
@@ -373,6 +378,7 @@
                     "iHRISFormAlias":"language_proficiency1",
                     "iHRISFormJoinFieldSource":"reading",
                     "iHRISFormJoinFieldDestination":"id",
+                    "joiningConstraint":false,
                     "iHRISField":[
                     ],
                     "extension":[{
@@ -396,6 +402,7 @@
                     "iHRISFormAlias":"language_proficiency2",
                     "iHRISFormJoinFieldSource":"writing",
                     "iHRISFormJoinFieldDestination":"id",
+                    "joiningConstraint":false,
                     "iHRISField":[
                     ],
                     "extension":[{
@@ -419,6 +426,7 @@
                     "iHRISFormAlias":"language_proficiency3",
                     "iHRISFormJoinFieldSource":"speaking",
                     "iHRISFormJoinFieldDestination":"id",
+                    "joiningConstraint":false,
                     "iHRISField":[
                     ],
                     "extension":[{
@@ -478,6 +486,7 @@
                     "iHRISFormAlias":"degree",
                     "iHRISFormJoinFieldSource":"degree",
                     "iHRISFormJoinFieldDestination":"id",
+                    "joiningConstraint":false,
                     "iHRISField":[
                         {
                             "fieldId":"name",
@@ -562,6 +571,7 @@
                     "iHRISFormAlias":"council",
                     "iHRISFormJoinFieldSource":"council",
                     "iHRISFormJoinFieldDestination":"id",
+                    "joiningConstraint":false,
                     "iHRISField":[
                         {
                             "fieldId":"name",
@@ -613,6 +623,7 @@
                     "iHRISFormAlias":"sector",
                     "iHRISFormJoinFieldSource":"sector",
                     "iHRISFormJoinFieldDestination":"id",
+                    "joiningConstraint":false,
                     "iHRISField":[
                     ],
                     "extension":[
@@ -638,6 +649,7 @@
                     "iHRISFormAlias":"profession",
                     "iHRISFormJoinFieldSource":"profession",
                     "iHRISFormJoinFieldDestination":"id",
+                    "joiningConstraint":false,
                     "iHRISField":[
                     ],
                     "extension":[
@@ -663,6 +675,7 @@
                     "iHRISFormAlias":"specialisation",
                     "iHRISFormJoinFieldSource":"specialisation_medical",
                     "iHRISFormJoinFieldDestination":"id",
+                    "joiningConstraint":false,
                     "iHRISField":[
                     ],
                     "extension":[
@@ -688,6 +701,7 @@
                     "iHRISFormAlias":"degree",
                     "iHRISFormJoinFieldSource":"degree",
                     "iHRISFormJoinFieldDestination":"id",
+                    "joiningConstraint":false,
                     "iHRISField":[
                     ],
                     "extension":[
@@ -770,6 +784,12 @@
             "Masculin":"male",
             "Féminin":"female",
             "autres":"other"
+        },
+        "limitLocationForm":{
+            "status":true,
+            "form":"district",
+            "fieldName":"id",
+            "value":"district|33"
         }
     }
 }
