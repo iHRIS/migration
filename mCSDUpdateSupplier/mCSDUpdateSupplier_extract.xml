@@ -8,7 +8,7 @@
     <creator>Intrahealth Informatics</creator>
     <email>hris@capacityproject.org</email>
     <link>https://launchpad.net/ihris-manage</link>
-    <version>4.3.8.0</version>
+    <version>4.3.10.0</version>
     <path name="configs">
       <value>./configs</value>
     </path>
@@ -47,6 +47,9 @@
   <erase path="/modules/FHIR/page/Organization/args/access">
     <lessThan version="4.3.0.3" />
   </erase>
+  <erase path="/modules/FHIR/page/ValueSet/args/access">
+    <lessThan version="4.3.0.3" />
+  </erase>
   <erase path="/modules/FHIR/page/Person/args/access">
     <lessThan version="4.3.0.3" />
   </erase>
@@ -66,6 +69,9 @@
         <configuration name="mcsd_can_access_organization" locale="en_US" values="single" type="string">
           <value>Allows access to mCSD/FHIR directories for Organizations (Care Services Update Supplier)</value>
         </configuration>
+        <configuration name="mcsd_can_access_valueset" locale="en_US" values="single" type="string">
+          <value>Allows access to mCSD/FHIR directories for ValueSet (Care Services Update Supplier)</value>
+        </configuration>
         <configuration name="mcsd_can_access_person" locale="en_US" values="single" type="string">
           <value>Allows access to mCSD/FHIR directories for Persons (Care Services Update Supplier)</value>
         </configuration>
@@ -75,6 +81,7 @@
           <value>mcsd_can_access_practitioner</value>
           <value>mcsd_can_access_location</value>
           <value>mcsd_can_access_organization</value>
+          <value>mcsd_can_access_valueset</value>
           <value>mcsd_can_access_person</value>
         </configuration>
       </configurationGroup>
@@ -90,7 +97,7 @@
       </configurationGroup>
     </configurationGroup>
     <configurationGroup name="/modules/FHIR/page">
-      <version>4.3.0.2</version>
+      
       <configurationGroup name="Practitioner">
         <configuration name="class" values="single" type="string">
           <value>iHRIS_Page_FHIR_Resource_new</value>
@@ -176,6 +183,25 @@
           <configuration name="tasks" values="many" type="string">
             <version>4.3.0.3</version>
             <value>mcsd_can_access_location</value>
+          </configuration>
+        </configurationGroup>
+      </configurationGroup>
+      <configurationGroup name="ValueSet">
+        <configuration name="class" values="single" type="string">
+          <value>iHRIS_Page_FHIR_Resource_new</value>
+        </configuration>
+        <configuration name="style" values="single" type="string">
+          <value>empty</value>
+        </configuration>
+        <configurationGroup name="args">
+          <configuration name="resource" values="single" type="string">
+            <value>ValueSet</value>
+          </configuration>
+          <configuration name="access" values="many" type="string">
+            <value>admin</value>
+          </configuration>
+          <configuration name="tasks" values="many" type="string">
+            <value>mcsd_can_access_valueset</value>
           </configuration>
         </configurationGroup>
       </configurationGroup>

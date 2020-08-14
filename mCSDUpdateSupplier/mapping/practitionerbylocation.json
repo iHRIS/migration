@@ -84,8 +84,8 @@
                                                                     "fieldId":"id",
                                                                     "iHRISFieldAlias":"id",
                                                                     "fhirField":"value",
-                                                                    "active":false,
-                                                                    "fhirBaseElement":"identifier"
+                                                                    "active":true,
+                                                                    "fhirBaseElement":""
                                                                 },
                                                                 {
                                                                     "fieldId":"surname",
@@ -350,7 +350,8 @@
         }
     ],
     "configs":{
-        "identifierSystemUrl":"http://localhost/ihris-rdc/",
+        "identifierSystemUrl":"http://ihris.org/fhir/CodeSystem/ihris-rdc",
+        "profile":"http://ihris.org/fhir/StructureDefinition/ihris-practitioner",
         "extensionUrl":"http://ihris.org/fhir/StructureDefinition/",
         "nameUse":"official",
         "binaryServerUrl":"http://localhost/ihris_photo/",
@@ -366,10 +367,15 @@
         "appendCountryCodeToPhoneNumber":{
             "value":"+243"
         },
+        "removeiHRISPrefixForCodeableConcept":true,
         "genderCode":{
             "Male":"male",
             "Female":"female",
             "autres":"other"
+        },
+        "defaultIdentifierCodeableConcept":{
+            "code":"IHRSID",
+            "display":"Internal IHRIS ID"
         },
         "limitLocationForm":{
             "status":true,

@@ -1673,12 +1673,13 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                 $count++;
                 if ( $this->useJSON ) {
                     $entry = array();
-                    $entry['fullURL'] = $this->getSiteBase() . "FHIR/Practitioner/" . $row->uuid;
+                    //$entry['fullURL'] = $this->getSiteBase() . "index.php/FHIR/Practitioner/" . $row->uuid;
                     $entry['resource'] = array( 'resourceType' => 'Practitioner' );
+                    $entry['resource']['meta'] = array( 'profile' => array($listConfigs['profile']) );
                 } else {
                     $entry = $this->doc->createElement("entry");
                     $fullURL = $this->doc->createElement("fullURL");
-                    $fullURL->setAttribute( 'value', $this->getSiteBase() . "FHIR/Practitioner/" . $row->uuid );
+                    //$fullURL->setAttribute( 'value', $this->getSiteBase() . "index.php/FHIR/Practitioner/" . $row->uuid );
                     $entry->appendChild( $fullURL );
                     $resource = $this->doc->createElement("resource");
                     $practitioner = $this->doc->createElement( "Practitioner" );
@@ -1699,7 +1700,7 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                     //if($keyJoinForm =="person_id"){
                     if($keyJoinForm){
                         $subQuery=$joinFormRequest['mainFieldQuery']. $joinFormRequest['sourceFieldQuery'];
-                        /* print_r($subQuery);
+                        /*print_r($subQuery);
                         print_r("-------------------------------------"); */
                         $subStmt = $db->prepare( $subQuery );
                         $subStmt->execute($paramSub);
@@ -1795,21 +1796,6 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
             //return null;
         }
     }
-    protected function getConfigData(&$listConfigs)
-    {
-        try
-        {
-            $dir = getcwd();
-            chdir("../modules/mCSDUpdateSupplier");
-            $strJsonFileContents = file_get_contents("./mapping/location.json");
-            $array = json_decode($strJsonFileContents, true);
-            $this->getConfig($array,$listConfigs);
-        }
-        catch(Exception $e)
-        {
-            echo "Error :".$e->getMessage();
-        }
-    }
     protected function buidMainRequest_PractitionerRole(&$mainRequestPractitionerRole,&$LinkedFormRequest,&$listMainForms,
     &$listMappingFields,&$listExtensionMappingField,&$listConfigs)
     {
@@ -1827,6 +1813,71 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
             if ( array_key_exists( 'fieldsMapping', $array ) ) {
                 foreach( $array['fieldsMapping'] as $key => $fieldsMapping) {
                     $this->extractJoinFormFieldsCollection($fieldsMapping,$fieldsMapping['iHRISForm'],$mainFieldQuery,$sourceFieldQuery,$listMainForms);
+                }
+            }
+            foreach($mainFieldQuery as $keyQuery=>$queryText){
+                $mainRequestPractitionerRole[]="SELECT DATE_FORMAT($keyQuery.last_modified,'%Y-%m-%d %T') as lastupdated ". $queryText.$sourceFieldQuery[$keyQuery];
+            }
+            //$mainRequestPractitionerRole=$mainFieldQuery.$sourceFieldQuery;
+            //$whereFilter=$this->buildWhereFilter($listMainForms);
+            $whereFilter=null;
+            $linkedFieldQuery=array();
+            $this->extractLinkedFields($array,$linkedFieldQuery,$listMainForms);
+            $LinkedFormRequest=$linkedFieldQuery;
+            $listForms=$listMainForms;
+            $this->getAllMappingFields($array,$listMappingFields,$listExtensionMappingField);
+            $this->getConfig($array,$listConfigs);
+            //print_r($LinkedFormRequest);
+            //return "request";
+        }
+        catch(Exception $e)
+        {
+            echo "Error :".$e->getMessage();
+            //return null;
+        }
+    }
+    protected function getConfigData(&$listConfigs)
+    {
+        try
+        {
+            $dir = getcwd();
+            chdir("../modules/mCSDUpdateSupplier");
+            $strJsonFileContents = file_get_contents("./mapping/location.json");
+            $array = json_decode($strJsonFileContents, true);
+            $this->getConfig($array,$listConfigs);
+        }
+        catch(Exception $e)
+        {
+            echo "Error :".$e->getMessage();
+        }
+    }
+    protected function buidMainRequest_Resources($resourceType,&$mainRequestPractitionerRole,&$LinkedFormRequest,&$listMainForms,
+    &$listMappingFields,&$listExtensionMappingField,&$listConfigs,&$listResourceMeta)
+    {
+        try{
+            $dir = getcwd();
+            chdir("../modules/mCSDUpdateSupplier");
+            $strJsonFileContents="";
+            if($resourceType=="ValueSet")
+            {
+                $strJsonFileContents = file_get_contents("./mapping/valueset.json");
+            }
+            else
+            {
+                return;
+            }
+            //$strJsonFileContents = file_get_contents("./mapping/practitionerrolebylocation.json");
+            $array = json_decode($strJsonFileContents, true);
+            $mainFieldQuery=array();
+            $sourceFieldQuery=array();
+            $listMainForms=array();
+            //print_r($array);
+            $this->extractMainFieldCollection($array,$mainFieldQuery,$sourceFieldQuery,$listMainForms);
+            //print_r($mainFieldQuery);
+            if ( array_key_exists( 'fieldsMapping', $array ) ) {
+                foreach( $array['fieldsMapping'] as $key => $fieldsMapping) {
+                    $this->extractJoinFormFieldsCollection($fieldsMapping,$fieldsMapping['iHRISForm'],$mainFieldQuery,$sourceFieldQuery,$listMainForms);
+                    $listResourceMeta[]=$fieldsMapping['meta'];
                 }
             }
             foreach($mainFieldQuery as $keyQuery=>$queryText){
@@ -3125,7 +3176,7 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
         /*echo "\n--------------------------------------------------------------\n";  */
 
         $oIdentifier=array();
-        $oIdentifier['system']=$configs['identifierSystemUrl'];
+        //$oIdentifier['system']=$configs['identifierSystemUrl'];
         //$oIdentifier['type']=array('coding'=>array(array('system'=>'http://terminology.hl7.org/CodeSystem/v2-0203','code'=>'EN','display'=>'Matricule')));
         $oHumanName['use']=$configs['nameUse'];
         $oPhoto = array();
@@ -3196,7 +3247,8 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                         {
                             $oIdentifier['type']=array('coding'=>array());
                         }
-                        $oIdentifier['type']['coding'][0]=array('display'=>$value);
+                        //$oIdentifier['type']['coding'][0]=array('display'=>$value);
+                        $oIdentifier['type']['coding'][0]['display']=$value;
                     }
                     elseif($mappingFields['fhirField']=="type_code")
                     {
@@ -3204,7 +3256,16 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                         {
                             $oIdentifier['type']=array('coding'=>array());
                         }
-                        $oIdentifier['type']['coding'][0]=array('code'=>$value);
+                        //$oIdentifier['type']['coding'][0]=array('code'=>$value);
+                        if($configs['removeiHRISPrefixForCodeableConcept'])
+                        {
+                            $temp=explode("|",$value)[1];
+                            $oIdentifier['type']['coding'][0]['code']=$$temp;
+                        }
+                        else{
+                            $oIdentifier['type']['coding'][0]['code']=$value;
+                        }
+                        
                     }
                     elseif($mappingFields['fhirField']=="value"){
                         $oIdentifier['value']=$value;
@@ -3501,7 +3562,14 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
 
         if($oIdentifier['value']!=null)
         {
-            
+            if(!array_key_exists('type',$oIdentifier))
+            {
+                $oIdentifier['type']=array('coding'=>array(array(
+                'code'=>$configs['defaultIdentifierCodeableConcept']['code'],
+                'display'=>$configs['defaultIdentifierCodeableConcept']['display'])),
+                'text'=>$configs['defaultIdentifierCodeableConcept']['display']
+            );
+            }
             array_push($top['identifier'],$oIdentifier);
         }
         $top['name'][]=$oHumanName;
@@ -3536,8 +3604,14 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
          {
             foreach($identifierLinked as $key=>$identifier)
             {
-                //array_push($top['identifier'],$identifier);
-                $identifier['type']=array('coding'=>array(array('system'=>'http://terminology.hl7.org/CodeSystem/v2-0203','code'=>'EN','display'=>'Matricule')));
+                if(!array_key_exists('type',$identifier))
+                {
+                    $identifier['type']=array('coding'=>array(array(
+                    'code'=>$configs['defaultIdentifierCodeableConcept']['code'],
+                    'display'=>$configs['defaultIdentifierCodeableConcept']['display'])),
+                    'text'=>$configs['defaultIdentifierCodeableConcept']['display']
+                );
+                }
                 $top['identifier'][]=$identifier;
             }
          } 
@@ -4161,17 +4235,31 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                             {
                                 if(!array_key_exists('type',$builtInIdentifier[$indexId]))
                                 {
-                                    $builtInIdentifier[$indexId]['type']=array('coding'=>array());
+                                    $builtInIdentifier[$indexId]['type']=array('coding'=>array(),'text'=>'');
+                                    
                                 }
-                                $builtInIdentifier[$indexId]['type']['coding'][0]=array('display'=>$value);
+                                ///$builtInIdentifier[$indexId]['type']['coding'][0]=array('display'=>$value);
+                                $builtInIdentifier[$indexId]['type']['coding'][0]['display']=$value;
+                                $builtInIdentifier[$indexId]['type']['text']=$value;
+
                             }
                             elseif($mappingFields['fhirField']=="type_code")
                             {
                                 if(!array_key_exists('type',$builtInIdentifier[$indexId]))
                                 {
-                                    $builtInIdentifier[$indexId]['type']=array('coding'=>array());
+                                    $builtInIdentifier[$indexId]['type']=array('coding'=>array(),'text'=>'');
                                 }
-                                $builtInIdentifier[$indexId]['type']['coding'][0]=array('code'=>$value);
+                                //$builtInIdentifier[$indexId]['type']['coding'][0]=array('code'=>$value);
+                                if($configs['removeiHRISPrefixForCodeableConcept'])
+                                {
+                                    $temp=explode("|",$value)[1];
+                                    $builtInIdentifier[$indexId]['type']['coding'][0]['code']=$temp;
+                                }
+                                else
+                                {
+                                    $builtInIdentifier[$indexId]['type']['coding'][0]['code']=$value;
+                                }
+                                
                             }
                             elseif($mappingFields['fhirField']=="value"){
                                 $builtInIdentifier[$indexId]['value']=$value;
@@ -4607,8 +4695,7 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
             }
         }
     }
-    protected function createMapping_Organization( $data,$linkedData,&$top,$listMappingFields,
-    $listExtensionMappingFields,$configs ) {
+    protected function createMapping_Organization( $data,$linkedData,&$top,$listMappingFields,$listExtensionMappingFields,$configs ) {
     $top['identifier'] = array();
     $top['type'] = array();
     $top['extension']=array();
@@ -5088,10 +5175,11 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                 ); */
         /** Return facility by geographic area. specification for DRC facilities list structure */
         $queries = array( 
-            'facility_healtharea' => "SELECT facility.csd_uuid as uuid, DATE_FORMAT(facility.last_modified, '%Y-%m-%d %T') AS lastupdated, facility.id, facility.name,facility.facility_type, ft.name AS facility_type_name, replace(health_area.id,'|','-') AS partof FROM hippo_facility AS facility JOIN hippo_health_area as health_area on health_area.id=facility.location JOIN hippo_county AS county ON county.id = health_area.county JOIN hippo_district AS district ON district.id = county.district JOIN hippo_region AS region ON region.id = district.region JOIN hippo_country AS country ON country.id = region.country LEFT JOIN hippo_facility_type ft ON ft.id = facility.facility_type ",
-            'facility_county'=>"SELECT facility.csd_uuid as uuid, DATE_FORMAT(facility.last_modified, '%Y-%m-%d %T') AS lastupdated, facility.id, facility.name, facility.facility_type, ft.name AS facility_type_name, IF(length(county.csd_uuid)=0,replace(county.id,'|','-'),county.csd_uuid) AS partof FROM hippo_facility AS facility JOIN hippo_county AS county ON county.id = facility.location JOIN hippo_district AS district ON district.id = county.district JOIN hippo_region AS region ON region.id = district.region JOIN hippo_country AS country ON country.id = region.country LEFT JOIN hippo_facility_type ft ON ft.id = facility.facility_type ",
+            'facility_healtharea' => "SELECT facility.csd_uuid as uuid, DATE_FORMAT(facility.last_modified, '%Y-%m-%d %T') AS lastupdated, facility.id, facility.name,facility.facility_type, ft.name AS facility_type_name, replace(replace(health_area.id,'|','-'),'_','-') AS partof FROM hippo_facility AS facility JOIN hippo_health_area as health_area on health_area.id=facility.location JOIN hippo_county AS county ON county.id = health_area.county JOIN hippo_district AS district ON district.id = county.district JOIN hippo_region AS region ON region.id = district.region JOIN hippo_country AS country ON country.id = region.country LEFT JOIN hippo_facility_type ft ON ft.id = facility.facility_type ",
+            'facility_county'=>"SELECT facility.csd_uuid as uuid, DATE_FORMAT(facility.last_modified, '%Y-%m-%d %T') AS lastupdated, facility.id, facility.name, facility.facility_type, ft.name AS facility_type_name, IF(length(county.csd_uuid)=0,replace(replace(county.id,'|','-'),'_','-'),county.csd_uuid) AS partof FROM hippo_facility AS facility JOIN hippo_county AS county ON county.id = facility.location JOIN hippo_district AS district ON district.id = county.district JOIN hippo_region AS region ON region.id = district.region JOIN hippo_country AS country ON country.id = region.country LEFT JOIN hippo_facility_type ft ON ft.id = facility.facility_type ",
             'facility_district'=>"SELECT facility.csd_uuid as uuid, DATE_FORMAT(facility.last_modified, '%Y-%m-%d %T') AS lastupdated, facility.id, facility.name, facility.facility_type, ft.name AS facility_type_name, district.csd_uuid AS partof FROM hippo_facility AS facility JOIN hippo_district AS district ON district.id = facility.location JOIN hippo_region AS region ON region.id = district.region JOIN hippo_country AS country ON country.id = region.country LEFT JOIN hippo_facility_type ft ON ft.id = facility.facility_type ",
-            'county' => "SELECT IF(length(county.csd_uuid)=0,replace(county.id,'|','-'),county.csd_uuid) as uuid, DATE_FORMAT(county.last_modified, '%Y-%m-%d %T') AS lastupdated, county.id, county.name, 'na' AS facility_type, 'na' AS facility_type_name, district.csd_uuid AS partof FROM hippo_county AS county LEFT JOIN hippo_district AS district ON district.id = county.district",
+            'health_area'=>"SELECT replace(replace(health_area.id,'|','-'),'_','-')  as uuid, DATE_FORMAT(health_area.last_modified, '%Y-%m-%d %T') AS lastupdated, county.id, health_area.name, 'na' AS facility_type, 'na' AS facility_type_name,IF(length(county.csd_uuid)=0,replace(replace(county.id,'|','-'),'_','-'),county.csd_uuid) AS partof FROM hippo_health_area AS health_area LEFT JOIN hippo_county AS county ON county.id = health_area.county",
+            'county' => "SELECT IF(length(county.csd_uuid)=0,replace(replace(county.id,'|','-'),'_','-'),county.csd_uuid) as uuid, DATE_FORMAT(county.last_modified, '%Y-%m-%d %T') AS lastupdated, county.id, county.name, 'na' AS facility_type, 'na' AS facility_type_name, district.csd_uuid AS partof FROM hippo_county AS county LEFT JOIN hippo_district AS district ON district.id = county.district",
             'district' => "SELECT district.csd_uuid as uuid, DATE_FORMAT(district.last_modified, '%Y-%m-%d %T') AS lastupdated, district.id, district.name, 'na' AS facility_type, 'na' AS facility_type_name, region.csd_uuid AS partof FROM hippo_district AS district LEFT JOIN hippo_region AS region ON region.id = district.region",
             'region' => "SELECT region.csd_uuid as uuid, DATE_FORMAT(region.last_modified, '%Y-%m-%d %T') AS lastupdated, region.id, region.name, 'na' AS facility_type, 'na' AS facility_type_name, country.csd_uuid AS partof FROM hippo_region AS region LEFT JOIN hippo_country AS country ON country.id = region.country",
             'country' => "SELECT country.csd_uuid as uuid, DATE_FORMAT(country.last_modified, '%Y-%m-%d %T') AS lastupdated, country.id, country.name, 'na' AS facility_type, 'na' AS facility_type_name, null AS partof FROM hippo_country AS country",
@@ -5876,6 +5964,7 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                         $entry = array();
                         //$entry['fullURL'] = $this->getSiteBase() . "PractitionerRole/" . $row->uuid;
                         $entry['resource'] = array( 'resourceType' => 'PractitionerRole' );
+                        $entry['resource']['meta'] = array( 'profile' => array($listConfigs['profile']) );
                     } else {
                         //$entry = $this->doc->createElement("entry");
                         $fullURL = $this->doc->createElement("fullURL");
@@ -5945,6 +6034,188 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                     //break;
     
                 }
+                $stmt->closeCursor();
+                unset( $stmt );
+                
+            } catch( PDOException $e ) {
+                I2CE::pdoError( $e, "Failed to get cached data for mCSD Update Supplier." );
+                http_response_code(500);
+                return false;
+            }
+        }
+        if ( $this->useJSON ) {
+            $top['total'] = $count;
+        } else {
+            $total->setAttribute('value', $count);
+        }
+        return true;
+        
+    }
+    protected function getUpdatesMapping_ValueSet( &$top ) {
+    
+        if ( $this->useJSON ) {
+            $top['type'] = 'history';
+            $top['total'] = 0;
+        } else {
+            $type = $this->doc->createElement("type");
+            $type->setAttribute("value", "history");
+            $top->appendChild($type);
+
+            $total = $this->doc->createElement("total");
+            $top->appendChild($total);
+        }
+        
+        $mainRequestResource=array();
+        $LinkedFormRequest=array();
+        $listForms=array();
+        $listMappingFields=array();
+        $listExtensionMappingFields=array();
+        $listConfigs=array();
+        $listResourceMeta=array();
+        $this->buidMainRequest_Resources("ValueSet",$mainRequestResource,$LinkedFormRequest,$listForms,$listMappingFields,
+        $listExtensionMappingFields,$listConfigs,$listResourceMeta);
+        foreach( $listForms as $form ) {
+            $cachedForm = new I2CE_CachedForm($form);
+            if ( !$cachedForm->generateCachedTable() ) {
+                http_response_code(500);
+                return false;
+            }
+        }
+        if ( $this->useJSON ) {
+            $top['entry'] = array();
+        }
+        $count = 0;
+        /*print_r($listConfigs);
+        return array('result'=>"ok"); 
+        print_r($mainRequestResource);*/
+        foreach($mainRequestResource as $indexReq=>$mainRequest)
+        {
+            $count++;
+            $params = array();
+            $resourceMeta=$listResourceMeta[$indexReq];
+
+            //print_r($resourceMeta);
+            
+            if($listConfigs["limitLocationForm"]['status'] ==true)
+            {
+                $mainRequest.=" WHERE ".$listConfigs["limitLocationForm"]['form'].".".$listConfigs["limitLocationForm"]['fieldName']."='".$listConfigs["limitLocationForm"]['value']."'";
+            }
+
+            $qry = $mainRequest;
+            /*
+            print_r($qry);*/
+            //return array('result'=>"ok");
+            try {
+                $db = I2CE::PDO();
+                $stmt = $db->prepare( $qry );
+                $stmt->execute( $params );
+
+                /* if ( $this->useJSON ) {
+                    $top['entry'] = array();
+                } */
+                if ( $this->useJSON ) {
+                    $entry = array();
+                    //$entry['fullURL'] = $this->getSiteBase() . "PractitionerRole/" . $row->uuid;
+                    $entry['resource'] = array( 'resourceType' => 'ValueSet' );
+                    $entry['resource']['contact'] = array();
+                    $entry['resource']['contact'][]=array('telecom'=>array(array('system'=>'url','value'=>'http://ihris.org')));
+                    $entry['resource']['compose'] = array('include'=>array(array('concept'=>array())));
+
+                    foreach($resourceMeta as $keyElement=>$metaElement)
+                    {
+                        if(isset($listConfigs["defaultIdentifierCodeableConcept"]) && $metaElement=="identifier-type-rdc")
+                        {   
+                            $defaultConcept=array(
+                                'code'=>$listConfigs['defaultIdentifierCodeableConcept']['code'],
+                                'display'=>$listConfigs['defaultIdentifierCodeableConcept']['display'],
+                                'definition'=>$listConfigs['defaultIdentifierCodeableConcept']['display']
+                            );
+                            $entry['resource']['compose']['include'][0]['concept'][]=$defaultConcept;
+
+                        }
+                        if($keyElement=="profile")
+                        {
+                            $entry['resource']['meta']=array('profile'=>array($metaElement));
+                        }
+                        else
+                        {
+                            $entry['resource'][$keyElement]=$metaElement;
+                        }
+
+                    }
+                    
+                } else {
+                    //$entry = $this->doc->createElement("entry");
+                    $fullURL = $this->doc->createElement("fullURL");
+                    //$fullURL->setAttribute( 'value', $this->getSiteBase() . "ValueSet/" . $row->uuid );
+                    $entry->appendChild( $fullURL );
+                    $resource = $this->doc->createElement("resource");
+                    $role = $this->doc->createElement( "PractitionerRole" );
+                }
+                while ( $row = $stmt->fetch() ) {
+                    $data=array();
+                    $linkedData=array();
+                    
+                    
+                    foreach($row as $key=>$value)
+                    {
+                        if($value && $value!="0000-00-00 00:00:00" && $value!="0000-00-00")
+                        {
+                            $data[$key]=$value;
+                        }
+    
+                        
+                    }
+                     //Add now Linked forms query
+                     if($indexReq==0)
+                     {
+                        foreach($LinkedFormRequest as $keyJoinForm=>$joinFormRequest){
+                            $subQuery="";
+                            $paramSub=array($row->id);
+                            //if($keyJoinForm =="person_id"){
+                            if($keyJoinForm){
+                                $subQuery=$joinFormRequest['mainFieldQuery']. $joinFormRequest['sourceFieldQuery'];
+                                /* print_r($subQuery);
+                                print_r("-------------------------------------"); */ 
+                                $subStmt = $db->prepare( $subQuery );
+                                $subStmt->execute($paramSub);
+                                $id_count=0;
+                                $linkedData[$keyJoinForm]=array();
+                                while ( $subRow = $subStmt->fetch() ) {
+                                    $linkedData[$keyJoinForm][$id_count]=array();
+                                    foreach($subRow as $key=>$value)
+                                    {
+                                        if($value && $value!="0000-00-00 00:00:00" && $value!="0000-00-00")
+                                        {
+                                            $linkedData[$keyJoinForm][$id_count][$key]=$value;
+                                        } 
+                                    }
+                                    $id_count++;
+                                } 
+                            }
+                        }
+                     }
+                     
+                    if ( $this->useJSON ) {
+                        $this->createMapping_ValueSet( $data,$linkedData, $entry['resource'],$listMappingFields,
+                        $listExtensionMappingFields,$listConfigs );
+                        //$top['entry'][] = $entry;
+                        //print_r($entry);
+                    } else {
+                        $this->createMapping_ValueSet( $data,$linkedData, $entry['resource'],$listMappingFields,
+                        $listExtensionMappingFields,$listConfigs );
+    
+                        $resource->appendChild($role);
+                        $entry->appendChild( $resource );
+                        //$top->appendChild( $entry );
+                    }
+                    //print_r($data);
+                    /*echo "\n---------------------------------------\n"; */
+                    //Limit the result to only one record
+                    //break;
+    
+                }
+                $top['entry'][] = $entry;
                 $stmt->closeCursor();
                 unset( $stmt );
                 
@@ -6441,12 +6712,31 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                         }
                         elseif($mappingFields['fhirField']=="code.coding")
                         {
-                            $job['coding']=array();
-                            $job['coding'][]=array('system'=>$configs['identifierSystemUrl'],'code'=>$value);
+                            if(!array_key_exists('coding',$job)){
+                                $job['coding']=array();
+                            }
+                            if($configs['removeiHRISPrefixForCodeableConcept'])
+                            {
+
+                                $temp=explode("|",$value)[1];
+                                $job['coding'][0]['code']=$temp;
+                            }
+                            else{
+                                $job['coding'][0]['code']=$value;
+                            }
+                            //$job['coding'][0]['code']=$value;
                         }
                         elseif($mappingFields['fhirField']=="code.text")
                         {
                             $job['text']=$value;
+                        }
+                        elseif($mappingFields['fhirField']=="code.display")
+                        {
+                            if(!array_key_exists('coding',$job)){
+                                $job['coding']=array();
+                            }
+                            
+                            $job['coding'][0]['display']=$value;
                         }
                         elseif($mappingFields['fhirField']=="specialty.coding")
                         {
@@ -6609,6 +6899,46 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                 
             }
         }
+       
+    }
+    protected function createMapping_ValueSet( $data,$linkedData,&$top,$listMappingFields,
+        $listExtensionMappingFields,$configs ) {
+        $concept=array();
+        foreach($data as $key=>$value)
+        {
+            
+            foreach($listMappingFields as $keyIndex=>$mappingFields)
+            {
+                if($key==$mappingFields['iHRISFieldAlias'] && $mappingFields['fhirBaseElement']=="concept")
+                {
+                    
+                    if($mappingFields['fhirField']=="code")
+                    {
+                        if($configs['removeiHRISPrefixForCodeableConcept'])
+                        {
+
+                            $temp=explode("|",$value)[1];
+                            $concept[$mappingFields['fhirField']]=$temp;
+                        }
+                        else{
+                            $concept[$mappingFields['fhirField']]=$value;
+                        }
+                    }
+                    elseif($mappingFields['fhirField']=="display"){
+                        $concept[$mappingFields['fhirField']]=$value;
+                    }
+                    elseif($mappingFields['fhirField']=="definition"){
+                        $concept[$mappingFields['fhirField']]=$value;
+                    }
+                }
+
+            }
+            
+            
+        }
+        $top['compose']['include'][0]['concept'][]=$concept;
+        //if($oIdentifier['value']!=null)
+        
        
     }
 

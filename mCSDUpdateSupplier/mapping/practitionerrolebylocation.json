@@ -52,6 +52,13 @@
                                             "iHRISFormJoinFieldDestination":"location",
                                             "joiningConstraint":true,
                                             "iHRISField":[
+                                                {
+                                                    "fieldId":"csd_uuid",
+                                                    "iHRISFieldAlias":"location",
+                                                    "fhirField":"location",
+                                                    "active":true,
+                                                    "fhirBaseElement":"PractitionerRole"
+                                                }
                                             ],
                                             "extension":[],
                                             "iHRISJoinedForms":[
@@ -76,6 +83,7 @@
                                                             "active":true,
                                                             "fhirBaseElement":"PractitionerRole"
                                                         }
+                                                        
                                                     ],
                                                     "extension":[],
                                                     "iHRISJoinedForms":[
@@ -96,7 +104,7 @@
                                                                 {
                                                                     "fieldId":"name",
                                                                     "iHRISFieldAlias":"cadre_title",
-                                                                    "fhirField":"code.text",
+                                                                    "fhirField":"code.display",
                                                                     "active":true,
                                                                     "fhirBaseElement":"PractitionerRole"
                                                                 }
@@ -140,6 +148,7 @@
     "fieldsLinked":[],
     "configs":{
         "identifierSystemUrl":"http://localhost/ihris-rdc/",
+        "profile":"http://ihris.org/fhir/StructureDefinition/ihris-practitioner-role",
         "extensionUrl":"http://ihris.org/fhir/StructureDefinition/",
         "profileName": "http://ihris.org/fhir/StructureDefinition/ihris-practitioner",
         "removeCurrencyFromAmount":{
@@ -148,6 +157,7 @@
         "transformFieldToResourceID":{
             "iHRISFieldAlias":"uuid"
         },
+        "removeiHRISPrefixForCodeableConcept":true,
         "limitLocationForm":{
             "status":true,
             "form":"region",
