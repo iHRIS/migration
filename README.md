@@ -35,6 +35,7 @@ This module allows to extraction the following resources:
  Informations on salary or other benefits as well as additonnal custom fields are managed as extensions.
  3. [Location](https://www.hl7.org/fhir/location.html): Related to facilities and geographic entities.
  4. [Organization](https://www.hl7.org/fhir/organization.html): This includes name of education,training institutuon and associations.
+ 5. [ValueSet](https://www.hl7.org/fhir/valueset.html): This includes data lists such as jobs, cadres, identification types to bind  to other resources.
  
  Since each iHRIS Manage site is customized based to the user needs,new fields could be added to the standard forms, new forms may be created as well as new list elements. 
  You need to retrieve all the fields to you want to export and link them to the existing FHIR resource attribute. For the fields that does not match any of the concerned resource
@@ -42,11 +43,11 @@ This module allows to extraction the following resources:
  
  It is advices to create a Excel file when you will put the name of the form, the field,the data type,the nature of the link (one-one,one-multiple), 
  the concerned fhir resource, the corresponding attribute or extension with its name.
- Now go to the module's folder <yoursitepath>/modules/mCSDUpdateSupplier/mapping, each resource has a config file to perform the mapping of iHRIS form's fields 
- to the FHIR res apart for the resource Location.
- - practitoner.json for the mapping of the Practitioners.
- - practitionerrole.json for the mapping of the PractitionerRoles.
+ Now go to the module's folder <yoursitepath>/modules/mCSDUpdateSupplier/mapping, each resource has a config file to perform the mapping of iHRIS form's fields to the FHIR res apart for the resource Location.
+ - practitonerbylocation.json for the mapping of the Practitioners. You
+ - practitionerrolebylocation.json for the mapping of the PractitionerRoles.
  - organization.json for the mapping of the Organizations.
+ - valueset.json for the mapping of data list such as jobs, cadres.
  
 ### The structure of the mapping configuration file
 The mapping config file is a json file format which has the following properties
@@ -78,8 +79,12 @@ for the resource.
 
 - fieldsMapping.iHRISJoinedForms: contains the forms definition and the fields for all one-one form link. such as the forms: demographics,personal_contact,work_contact.
 - fieldsLinked: contains the list of forms that have one-multiple link. Such as positions, educations, work history,languages,trainings,registrations.
-- configs: any additional configuration related to the processing of a particular field or a group of field. If you don't want to use one of the configuration just leave 
-the value empty.
+- configs: any additional configuration related to the processing of a particular field or a group of field. If you don't want to use one of the configuration just leave the value empty. You will find in this section the 'limitLocationForm' which allows to filter the resources by location to facilitate the extraction by District/Region. The profile key is also important and it must be set to the value used in iHRIS5 to defined in the 'url' of the corresponding structure definition.
+
+The profile url set by default for the iHRIS5 profiles are
+- Practitioner: http://ihris.org/fhir/StructureDefinition/ihris-practitioner
+- PractitionerRole: http://ihris.org/fhir/StructureDefinition/ihris-practitioner-role
+- Valueset: define based on the profile you are using. If you override an existing standard profile like identifier valueset you can use 'http://hl7.org/fhir/StructureDefinition/shareablevalueset'
 
 ### The structure definition of the iHRISField  
 
@@ -361,6 +366,9 @@ sudo service memcached restart
 
 - To extract the list of Organization, open this link
 <yourihrissiteurl>/FHIR/Organization/_history?_format=json
+
+- To extract the list of Organization, open this link
+<yourihrissiteurl>/FHIR/ValueSet/_history?_format=json
 
 ## Push the practitioner in the Hapi
 
