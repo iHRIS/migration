@@ -257,7 +257,7 @@ The group of the fields can constitute also an extension.
 ```
 - extensionName: The name of extension as used in the url attribute.
 - fhirBaseElement: Practitioner. extension is applied to the pratitioner resource level. By default.It could also be applied to the complex type attribute of the FHIR resource.
-- type:inGroup. The type of the extension with 2 values: inGroup|byFields.
+- type:inGroup. The type of the extension with 3 values: inGroup|byFields (You need to specify the appliedFields:list of fhir field to extend)|byType (ypu need to specified the type.Only complex type concerned such as valueCoding).
 - appliedFields: The seperated comma list of iHRISFieldAlias where this extension will be applied to.
 - iHRISField: collection of the fields to extract in the form.
 

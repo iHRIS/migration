@@ -107,9 +107,50 @@
                                                                     "fhirField":"code.display",
                                                                     "active":true,
                                                                     "fhirBaseElement":"PractitionerRole"
+                                                                },
+                                                                {
+                                                                    "fieldId":"name",
+                                                                    "iHRISFieldAlias":"cadre_text",
+                                                                    "fhirField":"code.text",
+                                                                    "active":true,
+                                                                    "fhirBaseElement":"PractitionerRole"
                                                                 }
                                                             ],
                                                             "extension":[]
+                                                        },
+                                                        {
+                                                            "iHRISForm":"job",
+                                                            "iHRISFormAlias":"job",
+                                                            "iHRISFormJoinFieldSource":"job",
+                                                            "iHRISFormJoinFieldDestination":"id",
+                                                            "joiningConstraint":false,
+                                                            "iHRISField":[
+                                                            ],
+                                                            "extension":[
+                                                                {
+                                                                    "extensionName":"ihris-practitionerrole-job",
+                                                                    "fhirBaseElement":"PractitionerRole",
+                                                                    "type":"byType",
+                                                                    "appliedFields":"",
+                                                                    "appliedType":"valueCoding",
+                                                                    "iHRISField":[
+                                                                        {
+                                                                            "fieldId":"id",
+                                                                            "iHRISFieldAlias":"job_code",
+                                                                            "fhirField":"code",
+                                                                            "active":true,
+                                                                            "fieldType":""
+                                                                        },
+                                                                        {
+                                                                            "fieldId":"title",
+                                                                            "iHRISFieldAlias":"job_title",
+                                                                            "fhirField":"display",
+                                                                            "active":true,
+                                                                            "fieldType":""
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
                                                         },
                                                         {
                                                             "iHRISForm":"person",
@@ -160,9 +201,9 @@
         "removeiHRISPrefixForCodeableConcept":true,
         "limitLocationForm":{
             "status":true,
-            "form":"region",
+            "form":"health_area",
             "fieldName":"id",
-            "value":"region|KN"
+            "value":"health_area|12"
         },
         "selectOnlyClosedPosition":{
             "status":false,

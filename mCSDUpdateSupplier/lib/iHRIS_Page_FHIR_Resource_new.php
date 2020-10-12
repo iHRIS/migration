@@ -2188,7 +2188,8 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                         else{
                             $extensionField=array('extensionName'=>$extensionElement['extensionName'],
                             'fhirBaseElement'=>$extensionElement['fhirBaseElement'],'type'=>$extensionElement['type'],
-                            'appliedFields'=>$extensionElement['appliedFields'],'origin'=>"main",'fieldList'=>array());
+                            'appliedFields'=>$extensionElement['appliedFields'],'origin'=>"main",'fieldList'=>array(),
+                            'appliedType'=>$extensionElement['appliedType']);
                             foreach($extensionElement['iHRISField'] as $keyIndex=>$fieldElement)
                             {
                                 //array_push($listFieldDefinition,$fieldElement);
@@ -2383,7 +2384,8 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                         else{
                             $extensionField=array('extensionName'=>$extensionElement['extensionName'],
                             'fhirBaseElement'=>$extensionElement['fhirBaseElement'],'type'=>$extensionElement['type'],
-                            'appliedFields'=>$extensionElement['appliedFields'],'origin'=>"main",'fieldList'=>array());
+                            'appliedFields'=>$extensionElement['appliedFields'],'origin'=>"main",'fieldList'=>array(),
+                            'appliedType'=>$extensionElement['appliedType']);
                             foreach($extensionElement['iHRISField'] as $keyField=>$keyElement){
                                 //array_push($listFieldDefinition,$keyElement);
                                 if($keyElement['active']){
@@ -3832,7 +3834,67 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                 }
             }
         }
-        
+        $indexGroupExtension=0;
+        foreach($listExtensionMappingFields as $keyExtIndex=>$extensionMapping)
+        {
+            //print_r($extensionMapping);
+            if($extensionMapping['type']=="byType")
+            {
+                
+                if($extensionMapping['fhirBaseElement']=="Practitioner")
+                {
+                   
+                    $indexGroupExtension=$keyExtIndex;
+                    $hasMainFieldData=false;
+                    $builtPractitionerExtension[$indexGroupExtension]=array();
+                    $builtPractitionerExtension[$indexGroupExtension]['url']=$configs['extensionUrl'].$extensionMapping['extensionName'];
+                    $currentValue= array();
+                    foreach($extensionMapping['fieldList'] as $keyField=>$extensionField)
+                    {
+                        //print_r($extensionField);
+                        foreach($mainData as $keyData=>$value){
+
+                            if($keyData==$extensionField['iHRISFieldAlias'])
+                            {
+                                if(array_key_exists('defaultConfigValue',$extensionField)){
+                                    $value=$configs[$extensionField['defaultConfigValue']].$value;
+                                }
+                                $hasMainFieldData=true;
+                                if($extensionMapping['appliedType']=="valueCoding")
+                                {
+                                    switch($extensionField['fhirField']){
+                                        case"code":
+                                            if($configs['removeiHRISPrefixForCodeableConcept'])
+                                            {
+
+                                                $temp=explode("|",$value)[1];
+                                                $currentValue['code']=$temp;
+                                            }
+                                            else{
+                                                $currentValue['code']=$value;
+                                            }
+                                        break;
+                                        case"display":
+                                            $currentValue['display']=$value;
+                                        break;
+                                    }
+                                    
+                                }
+                            }
+                        }
+                            
+                    }
+                    //print_r($currentValue);
+                    if(!$hasMainFieldData){
+                        $builtPractitionerExtension[$indexGroupExtension]=array();
+                    }
+                    //$indexGroupExtension++;
+                    //array_push( $builtPractitionerExtension[$indexGroupExtension],$currentValue);
+                    $builtPractitionerExtension[$indexGroupExtension]["valueCoding"]=$currentValue;
+                }
+                
+            }
+        }
         foreach($listExtensionMappingFields as $keyExtIndex=>$extensionMapping)
         {
             if($extensionMapping['type']=="inGroup")
@@ -3958,6 +4020,7 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
     {
         //$practitionerGroupExtension=array();
         //$communicationLinked=array();
+        //print_r($mainData);
         $indexGroupExtension=0;
        
         foreach($listExtensionMappingFields as $keyExtIndex=>$extensionMapping)
@@ -3995,7 +4058,7 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                                     case"dateTime":
                                         $builtPractitionerExtension[$indexGroupExtension]['extension'][]=array('url'=>$extensionField['fhirField'],'valueDateTime'=> (new DateTime($value))->format("c"));
                                     break;
-                                    case "code":
+                                    case "valueCoding":
                                         $builtPractitionerExtension[$indexGroupExtension]['extension'][]=array('url'=>$extensionField['fhirField'],'valueCoding'=>array('code'=>$value));
                                     break;
                                     default:
@@ -4010,6 +4073,67 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                     }
                     //$indexGroupExtension++;
                 }
+            }
+        }
+        $indexGroupExtension=0;
+        foreach($listExtensionMappingFields as $keyExtIndex=>$extensionMapping)
+        {
+            //print_r($extensionMapping);
+            if($extensionMapping['type']=="byType")
+            {
+                
+                if($extensionMapping['fhirBaseElement']=="PractitionerRole")
+                {
+                   
+                    $indexGroupExtension=$keyExtIndex;
+                    $hasMainFieldData=false;
+                    $builtPractitionerExtension[$indexGroupExtension]=array();
+                    $builtPractitionerExtension[$indexGroupExtension]['url']=$configs['extensionUrl'].$extensionMapping['extensionName'];
+                    $currentValue= array();
+                    foreach($extensionMapping['fieldList'] as $keyField=>$extensionField)
+                    {
+                        //print_r($extensionField);
+                        foreach($mainData as $keyData=>$value){
+
+                            if($keyData==$extensionField['iHRISFieldAlias'])
+                            {
+                                if(array_key_exists('defaultConfigValue',$extensionField)){
+                                    $value=$configs[$extensionField['defaultConfigValue']].$value;
+                                }
+                                $hasMainFieldData=true;
+                                if($extensionMapping['appliedType']=="valueCoding")
+                                {
+                                    switch($extensionField['fhirField']){
+                                        case"code":
+                                            if($configs['removeiHRISPrefixForCodeableConcept'])
+                                            {
+
+                                                $temp=explode("|",$value)[1];
+                                                $currentValue['code']=$temp;
+                                            }
+                                            else{
+                                                $currentValue['code']=$value;
+                                            }
+                                        break;
+                                        case"display":
+                                            $currentValue['display']=$value;
+                                        break;
+                                    }
+                                    
+                                }
+                            }
+                        }
+                            
+                    }
+                    //print_r($currentValue);
+                    if(!$hasMainFieldData){
+                        $builtPractitionerExtension[$indexGroupExtension]=array();
+                    }
+                    //$indexGroupExtension++;
+                    //array_push( $builtPractitionerExtension[$indexGroupExtension],$currentValue);
+                    $builtPractitionerExtension[$indexGroupExtension]["valueCoding"]=$currentValue;
+                }
+                
             }
         }
        /*  echo "\n------------------result for main data --------------------\n";
@@ -6642,7 +6766,8 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
         $oIdentifier=array();
         $job=array();
         $specialty=array();
-        /* echo "\n--------------------data -------------------------\n";
+        /*echo "\n--------------------data -------------------------\n";
+        
         print_r($data);
         echo "\n--------------------metadata -------------------------\n"; */
         //print_r($listMappingFields);
@@ -6665,6 +6790,7 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                     }
                     
                     if(array_key_exists('extension',$mappingFields)){
+                        //print_r($mappingFields['extension']);
                         switch($mappingFields['extension']['fieldType'])
                         {
                             case"integer":
@@ -6679,7 +6805,7 @@ class iHRIS_Page_FHIR_Resource_new extends I2CE_Page{
                             case"dateTime":
                                 $oExtension=array('url'=>$configs['extensionUrl'].$mappingFields['extension']['extensionName'],'valueDateTime'=>(new DateTime($value))->format("c"));
                             break;
-                            case "code":
+                            case "valueCoding":
                                 $oExtension=array('url'=>$configs['extensionUrl'].$mappingFields['extension']['extensionName'],'valueCoding'=>array("code"=>$value));
                             break;
                             default:
